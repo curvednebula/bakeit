@@ -5,6 +5,8 @@ import * as finalHandler from 'finalhandler';
 import * as http from 'http';
 import * as serveStatic from 'serve-static';
 import * as fs from 'fs';
+import * as fse from 'fs-extra';
+import * as path from 'path';
 
 import { Config } from "./config";
 import { StaticGen } from './staticgen';
@@ -12,6 +14,7 @@ import { StaticGen } from './staticgen';
 
 class App {
 
+  private configFilename = './bakeit-config.json';
   private config:Config;
 
   public run() {
@@ -22,21 +25,38 @@ class App {
     var serve:boolean = false;
 
     switch (args[argsOffset]) {
+      case 'init':
+        var projName = "bakeit-proj"
+        if (args.length > argsOffset+1) {
+          projName = args[argsOffset+1];
+        }
+        this.initBakeitProject(projName);
+        break;
+
       case 'serve': 
-        serve = true; 
+        this.bakeit(true);
         break;
 
       case 'help': 
         this.printHelp();
-        process.exit();
-    }
+        break;
 
-    var configFilename = 'bakeit-config.json';
+      default:
+        this.bakeit(false);
+        break;
+    }
+  }
+
+  private initBakeitProject(projName: string) {
+    fse.copy(path.join(__dirname, '../init'), path.join('./', projName));
+  }
+
+  private bakeit(serve: boolean) {
 
     try {
-      this.config = JSON.parse(fs.readFileSync(configFilename).toString());
+      this.config = this.readConfig();
     } catch (err) {
-      console.error(`ERROR: Can't find or error in ${configFilename}.`);
+      console.error(`ERROR: Can't find or error in ${this.configFilename}.`);
       console.error(err);
       process.exit(1);
     }
@@ -49,8 +69,8 @@ class App {
       this.config.outputDir = 'dist';
     }
 
-    var gen = new StaticGen(this.config);
-    gen.generate();
+    var gen = new StaticGen();
+    gen.generate(this.config);
 
     if (serve) {
       this.startFileChangeWatcher(gen);
@@ -58,29 +78,35 @@ class App {
     }
   }
 
+  private readConfig(): Config {
+    return JSON.parse(fs.readFileSync(this.configFilename).toString());
+  }
+
+  private printHelp() {
+    console.log('Usage: bakeit [<cmd>]\n\n' +
+      'Where <cmd>:\n' +
+      '  init [<folder-name>] - init new bakeit project folder\n' +
+      '  serve - runs HTTP server and re-generates site automatically on source files change\n' +
+      '  help - this help info\n'
+    );
+  }
+
   private startFileChangeWatcher(gen: StaticGen) {
     // watch source dir ignoring .dotfiles and re-run generate
     chokidar
-      .watch(this.config.sourceDir, { 
+      .watch([this.config.sourceDir, this.configFilename], { 
         //ignored: /(^|[\/\\])\../,
         ignoreInitial: true
       })
       .on('all', (event, path) => {
         console.log(`\n${event}:`, path);
         try {
-          gen.generate();
+          this.config = this.readConfig();
+          gen.generate(this.config);
         } catch (err) {
           console.error(err);
         }
       });
-  }
-
-  private printHelp() {
-    console.log('Usage: bakeit [<cmd>]\n\n' +
-      'Where <cmd>:\n' +
-      '  serve - runs HTTP server and re-generates site automatically on source files change\n' +
-      '  help - this help info\n'
-    );
   }
 
   private startHttpServer() {

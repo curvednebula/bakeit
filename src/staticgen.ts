@@ -1,7 +1,7 @@
 import * as marked from 'marked';
 import * as fs from 'fs';
+import * as fse from 'fs-extra';
 import * as path from 'path';
-import * as mkdirp from 'mkdirp';
 import * as yaml from 'yamljs';
 
 import { Config } from './config';
@@ -26,16 +26,25 @@ export class StaticGen {
   private onAllAsyncWritesDone: () => void;
 
 
-  constructor(config: Config) {
+  constructor() {
+  }
+
+  public generate(config: Config): void {
 
     this.config = config;
     this.sourceRootRelPath = config.sourceDir;
     this.outputRelPath = config.outputDir;
 
     this.renderer = new TemplateRenderer(path.join(this.sourceRootRelPath, this.themeDir));
+
+    fse.emptyDir(this.outputRelPath)
+      .then(() => {
+        this.generateOutput();
+        this.postProcessing();
+      });
   }
 
-  public generate(): void {
+  private generateOutput(): void {
 
     var allPagesData = new Array<PageData>();
 
@@ -46,19 +55,22 @@ export class StaticGen {
 
     // site map: page with links to all pages
 
-    var mapPageData = new PageData();
-    mapPageData.frontMatter = {
-      template: 'sitemap',
-      title: 'Site Map'
-    };
-    mapPageData.url = path.join(this.outputRelPath, 'sitemap.html');
-    mapPageData.config = this.config;
-    mapPageData.pages = allPagesData;
+    if (this.config.sitemap === true) {
 
-    this.generatePage(mapPageData.url, this.defaultTemplate, mapPageData);
+      var mapPageData = new PageData();
+      mapPageData.frontMatter = {
+        template: 'sitemap',
+        title: 'Site Map'
+      };
+      mapPageData.url = path.join(this.outputRelPath, 'sitemap.html');
+      mapPageData.config = this.config;
+      mapPageData.pages = allPagesData;
 
-    // post-processing
+      this.generatePage(mapPageData.url, this.defaultTemplate, mapPageData);
+    }
+  }
 
+  private postProcessing(): void {
     this.executeWhenAllDone(() => {
       if (this.config.duplicatePages !== undefined) {
         this.config.duplicatePages.forEach(dupPage => {
@@ -227,23 +239,24 @@ export class StaticGen {
 
     this.asyncWrites.add(filename);
     
-    mkdirp(path.dirname(filename), (err) => {
-      
-      if (err) {
-        console.error(`ERROR: can't create folder ${path.dirname(filename)}`);
-        return;
-      }
-
-      fs.writeFile(filename, contents, (err) => {
+    fse.ensureDir(path.dirname(filename))
+      .then(() => {
+        fs.writeFile(filename, contents, (err) => {
+          if (err) {
+            console.error(`ERROR: can't write to ${filename}`);
+          }
+          this.asyncWrites.delete(filename);
+          if (this.asyncWrites.size == 0 && this.onAllAsyncWritesDone !== null) {
+            this.onAllAsyncWritesDone();
+          }
+        });
+      })
+      .catch((err) => { 
         if (err) {
-          console.error(`ERROR: can't write to ${filename}`);
-        }
-        this.asyncWrites.delete(filename);
-        if (this.asyncWrites.size == 0 && this.onAllAsyncWritesDone !== null) {
-          this.onAllAsyncWritesDone();
+          console.error(`ERROR: can't create folder ${path.dirname(filename)}`);
+          return;
         }
       });
-    });
   }
 
   /*

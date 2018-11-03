@@ -7,6 +7,7 @@ export class MenuItem {
 export class Config {
   sourceDir: string;
   outputDir: string;
+  sitemap: boolean;
   menuItems: MenuItem[];
   duplicatePages: {src: string, dst: string}[];
 }
