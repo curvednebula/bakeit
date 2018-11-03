@@ -1,6 +1,6 @@
 {
   "name": "bakeit",
-  "version": "0.1.9",
+  "version": "0.1.11",
   "description": "Static site generator",
   "keywords": [
     "site generator",
@@ -15,6 +15,10 @@
   },
   "author": "Elya Sikerin",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lumarama/bakeit"
+  },
   "bin": {
     "bakeit": "./dist/main.js"
   },
