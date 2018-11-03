@@ -5,7 +5,6 @@ export class MenuItem {
 };
 
 export class BuildOptions {
-  assets: string[];
   scripts: string[];
   styles: string[];
   sitemapPage: string;

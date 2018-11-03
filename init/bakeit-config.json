@@ -11,8 +11,6 @@
 
   "build": {
     "sitemapPage": "sitemap.html",
-    "assets": [
-    ],
     "scripts": [
     ],
     "styles": [
