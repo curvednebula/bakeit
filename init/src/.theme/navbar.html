@@ -1,0 +1,15 @@
+<template>
+  <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+      <a class="navbar-brand text-light" href="/">{{config.title}}</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsingNavbar" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+      </button>
+      <div div class="collapse navbar-collapse" id="collapsingNavbar">
+        <div class="navbar-nav">
+          {{#config.menuItems}}
+          <a class="nav-item nav-link" href="{{url}}">{{name}}</a>
+          {{/config.menuItems}}
+        </div>
+      </div>
+  </nav>
+</template>

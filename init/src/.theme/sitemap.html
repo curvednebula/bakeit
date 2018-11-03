@@ -1,0 +1,11 @@
+<template>
+  <div class="content-window">
+
+    <h4>Site Map</h4>
+
+    {{#pages}}
+    <p><a href="{{{url}}}">{{frontMatter.title}}</a></p>
+    {{/pages}}
+
+  </div>
+</template>

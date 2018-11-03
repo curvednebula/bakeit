@@ -1,0 +1,33 @@
+{
+  "name": "bakeit",
+  "version": "0.1.9",
+  "description": "Static site generator",
+  "keywords": [
+    "site generator",
+    "generator",
+    "static site",
+    "markdown",
+    "mustache"
+  ],
+  "main": "./dist/main.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "author": "Elya Sikerin",
+  "license": "MIT",
+  "bin": {
+    "bakeit": "./dist/main.js"
+  },
+  "dependencies": {
+    "@types/filesystem": "0.0.29",
+    "@types/node": "^10.12.0",
+    "chokidar": "^2.0.4",
+    "finalhandler": "^1.1.1",
+    "marked": "^0.5.1",
+    "mkdirp": "^0.5.1",
+    "mustache": "^3.0.0",
+    "serve-static": "^1.13.2",
+    "typescript": "^3.1.3",
+    "yamljs": "^0.3.0"
+  }
+}

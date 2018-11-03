@@ -1,0 +1,14 @@
+{
+  "sourceDir": "src",
+  "outputDir": "dist",
+  
+  "duplicatePages": [
+  ],
+
+  "title": "BakeIt",
+
+  "menuItems": [
+    { "name": "Home", "url": "/" },
+    { "name": "Site Map", "url": "/sitemap.html"}
+  ]
+}
