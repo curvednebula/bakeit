@@ -1,4 +1,4 @@
-# BakeIt - Static site generator (yes, one more)
+# BakeIt - Static site generator
 
 BakeIt allows you to generate website from Markdown (.md) source files. It uses {{ mustache }} as templating language.
 This is work in progress yet. While it is functional tool already.
@@ -9,27 +9,10 @@ Install bakeit:
 
     npm install -g bakeit
 
-Create NPM project for your web-site:
+Create your website project:
 
-    npm init
-
-Create bakeit-config.json file in the project folder:
-
-    {
-      "sourceDir": "src",
-      "outputDir": "dist",
-
-      "menuItems": [
-        {
-          "name": "Home", 
-          "url": "/"
-        },
-        {
-          "name": "About", 
-          "url": "/about"
-        }
-      ]
-    }
+    bakeit init my-website
+    cd my-website
 
 Put your source .md files to:
 
@@ -47,7 +30,7 @@ To run development HTTP server:
 
     bakeit serve
 
-## Source files format
+## Source (.md) files format
 
     ---
     template: map
@@ -79,23 +62,10 @@ There must be at least one default template (src/.theme/default.html):
 
     <script>
     function beforeRender(renderer, pageData) {
-        // you can use java script to pre-process each template rendering, by populating new template parts
-        // i.e. in this case {{{navBar}}} is populated using another template
-        // which allows to nest one template into another
         pageData.navBar = renderer.renderTemplate('navbar', pageData);
     }
     </script>
 
-I.e. navbar template could be (src/.theme/navbar.html):
+You can use JavaScript to pre-process each template rendering. I.e. in the example above {{{navBar}}} is populated using another template (src/.theme/navbar.html). This allows to nest one template into another.
 
-    <template>
-      <div class="navbar-nav">
-        {{#menuItems}}
-        <a href="{{url}}">{{name}}</a>
-        {{/menuItems}}
-      </div>
-    </template>
-
-It uses {{#menuItems}} ... {{/menuItems}} construct. Menu items are defined in the bakeit-config.json file.
-
-Note that script section is optional. It allows to perform pageData pre-processing before the page is rendered.
+Script section is optional.

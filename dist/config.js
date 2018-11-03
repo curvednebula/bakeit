@@ -4,6 +4,9 @@ class MenuItem {
 }
 exports.MenuItem = MenuItem;
 ;
+class BuildOptions {
+}
+exports.BuildOptions = BuildOptions;
 class Config {
 }
 exports.Config = Config;

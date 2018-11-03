@@ -4,10 +4,17 @@ export class MenuItem {
   public url: string;
 };
 
+export class BuildOptions {
+  assets: string[];
+  scripts: string[];
+  styles: string[];
+  sitemapPage: string;
+  copy: {src: string, dst: string}[];
+}
+
 export class Config {
   sourceDir: string;
   outputDir: string;
-  sitemap: boolean;
   menuItems: MenuItem[];
-  duplicatePages: {src: string, dst: string}[];
+  build: BuildOptions;
 }

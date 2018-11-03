@@ -14,50 +14,67 @@ class StaticGen {
         this.jsonIndexFile = 'index.json';
         this.themeDir = '.theme';
         this.urlsPrefix = '/';
-        this.extension = '.md';
+        this.sourceExtension = '.md';
         this.asyncWrites = new Set();
     }
     generate(config) {
-        this.config = config;
-        this.sourceRootRelPath = config.sourceDir;
-        this.outputRelPath = config.outputDir;
-        this.renderer = new template_renderer_1.TemplateRenderer(path.join(this.sourceRootRelPath, this.themeDir));
-        fse.emptyDir(this.outputRelPath)
-            .then(() => {
-            this.generateOutput();
-            this.postProcessing();
+        // if previous run isn't finished yet - wait
+        this.executeWhenAllDone(() => {
+            this.config = config;
+            this.sourceRootPath = config.sourceDir;
+            this.outputRootPath = config.outputDir;
+            this.allPagesData = new Array();
+            this.renderer = new template_renderer_1.TemplateRenderer(path.join(this.sourceRootPath, this.themeDir));
+            fse.emptyDir(this.outputRootPath)
+                .then(() => {
+                this.generateOutput();
+                this.executeWhenAllDone(() => {
+                    this.postProcessing();
+                });
+            });
         });
     }
     generateOutput() {
-        var allPagesData = new Array();
-        this.getFilenames(this.sourceRootRelPath, this.extension, (relDirPath, relFilenames) => {
-            var dirPagesData = this.processDir(relDirPath, relFilenames);
-            allPagesData = allPagesData.concat(dirPagesData);
+        this.getFilenames(this.sourceRootPath, null, (dir, files) => {
+            var dirPagesData = this.processDir(dir, files);
+            this.allPagesData = this.allPagesData.concat(dirPagesData);
         });
-        // site map: page with links to all pages
-        if (this.config.sitemap === true) {
+    }
+    postProcessing() {
+        // generate sitemap
+        if (this.config.build.sitemapPage !== undefined) {
             var mapPageData = new page_data_1.PageData();
             mapPageData.frontMatter = {
                 template: 'sitemap',
                 title: 'Site Map'
             };
-            mapPageData.url = path.join(this.outputRelPath, 'sitemap.html');
+            mapPageData.url = path.join(this.outputRootPath, this.config.build.sitemapPage);
             mapPageData.config = this.config;
-            mapPageData.pages = allPagesData;
+            mapPageData.pages = this.allPagesData;
+            console.info(`Generating: ${mapPageData.url}`);
             this.generatePage(mapPageData.url, this.defaultTemplate, mapPageData);
         }
-    }
-    postProcessing() {
-        this.executeWhenAllDone(() => {
-            if (this.config.duplicatePages !== undefined) {
-                this.config.duplicatePages.forEach(dupPage => {
-                    var src = path.join(this.outputRelPath, dupPage.src, 'index.html');
-                    var dst = path.join(this.outputRelPath, dupPage.dst, 'index.html');
-                    console.info(`Copy: ${src} -> ${dst}`);
-                    fs.copyFileSync(src, dst);
-                });
-            }
-        });
+        // copy files
+        if (this.config.build.copy !== undefined) {
+            this.config.build.copy.forEach(dupPage => {
+                var src = path.join(this.outputRootPath, dupPage.src);
+                var dst = path.join(this.outputRootPath, dupPage.dst);
+                console.info(`Copying: ${src} -> ${dst}`);
+                this.copyAsync(src, dst);
+            });
+        }
+        // pack external scripts
+        if (this.config.build.scripts !== undefined) {
+            this.config.build.scripts.forEach((item) => {
+                this.copyAsync(item, path.join(this.outputRootPath, 'js'));
+            });
+        }
+        // pack external styles
+        if (this.config.build.styles !== undefined) {
+            this.config.build.styles.forEach((item) => {
+                this.copyAsync(item, path.join(this.outputRootPath, 'css'));
+            });
+        }
     }
     executeWhenAllDone(done) {
         if (this.asyncWrites.size == 0) {
@@ -69,35 +86,56 @@ class StaticGen {
             done();
         };
     }
-    processDir(relDirPath, relFilenames) {
-        console.info(`Processing folder: ${relDirPath}`);
+    asyncWriteStarted(file) {
+        this.asyncWrites.add(file);
+    }
+    asyncWriteDone(file) {
+        this.asyncWrites.delete(file);
+        if (this.asyncWrites.size == 0 && this.onAllAsyncWritesDone !== null) {
+            this.onAllAsyncWritesDone();
+        }
+    }
+    processDir(dir, files) {
+        console.info(`Processing folder: ${dir}`);
         var dirPagesData = new Array();
-        var indexFilename = null;
-        for (var i = 0; i < relFilenames.length; i++) {
-            var relFilename = relFilenames[i];
-            if (relFilename.endsWith(this.sourceIndexFile)) {
-                indexFilename = relFilename;
+        var indexFile = null;
+        for (var i = 0; i < files.length; i++) {
+            var file = files[i];
+            if (file.endsWith(this.sourceIndexFile)) {
+                indexFile = file;
             }
-            else {
-                // regular content page
-                var buf = this.readFile(relFilename);
+            else if (file.endsWith(this.sourceExtension)) {
+                // markdown (.md) source file
+                var buf = this.readFile(file);
                 var pageData = this.getPageData(buf);
-                pageData.url = this.getPageUrl(relFilename);
+                pageData.url = this.getPageUrl(file);
                 dirPagesData.push(pageData);
-                this.generatePage(this.getOutputHtmlPageFilename(relFilename), this.defaultTemplate, pageData);
+                var outputFile = this.getOutputHtmlPageFilename(file);
+                console.info(`Generating: ${file} -> ${outputFile}`);
+                this.generatePage(outputFile, this.defaultTemplate, pageData);
+            }
+            else if (!path.basename(file).startsWith('.')) {
+                // non markdown source file - just copy it (ignoring files that start from .)
+                var outputFile = this.getOutputPath(file);
+                console.info(`Copying: ${file} -> ${outputFile}`);
+                this.copyAsync(file, outputFile);
             }
         }
-        if (indexFilename != null) {
+        var dirPagesDataIncludingIndex = dirPagesData.slice();
+        if (indexFile != null) {
             // folder index
-            var buf = this.readFile(indexFilename);
+            var buf = this.readFile(indexFile);
             var pageData = this.getPageData(buf);
-            pageData.url = this.getPageUrl(indexFilename);
+            pageData.url = this.getPageUrl(indexFile);
             pageData.pages = dirPagesData;
-            this.generatePage(this.getOutputHtmlPageFilename(indexFilename), this.defaultTemplate, pageData);
-            var jsonIndexFilename = this.getOutputPath(path.join(relDirPath, this.jsonIndexFile));
+            dirPagesDataIncludingIndex.push(pageData);
+            var outputFile = this.getOutputHtmlPageFilename(indexFile);
+            console.info(`Generating: ${indexFile} -> ${outputFile}`);
+            this.generatePage(outputFile, this.defaultTemplate, pageData);
+            //var jsonIndexFilename = this.getOutputPath(path.join(dir, this.jsonIndexFile));
             //this.generateIndexJson(jsonIndexFilename, pageData);
         }
-        return dirPagesData;
+        return dirPagesDataIncludingIndex;
     }
     /*
     private generateIndexJson(filename: string, pageData: any): void {
@@ -148,79 +186,88 @@ class StaticGen {
         pageData.config = this.config;
         return pageData;
     }
-    generatePage(outputFilename, templateName, pageData) {
+    generatePage(outputFile, templateName, pageData) {
         try {
             var html = this.renderer.renderTemplate(templateName, pageData);
-            this.writeFile(outputFilename, html);
+            this.writeFileAsync(outputFile, html);
         }
         catch (err) {
-            console.error(`ERROR: can't create ${outputFilename}`);
+            console.error(`ERROR: can't create ${outputFile}`);
             throw err;
         }
     }
-    getPageUrl(sourceRelFilename) {
-        var from = sourceRelFilename.indexOf(this.sourceRootRelPath) + this.sourceRootRelPath.length;
-        var to = sourceRelFilename.lastIndexOf('.');
-        return path.join(this.urlsPrefix, sourceRelFilename.substring(from, to));
-    }
-    getOutputPath(sourceRelPath) {
-        var from = sourceRelPath.indexOf(this.sourceRootRelPath) + this.sourceRootRelPath.length;
-        return path.join(this.outputRelPath, sourceRelPath.substr(from));
-    }
-    getOutputHtmlPageFilename(sourceRelFilename) {
-        var from = sourceRelFilename.indexOf(this.sourceRootRelPath) + this.sourceRootRelPath.length;
-        var to = sourceRelFilename.lastIndexOf('.');
-        if (sourceRelFilename.endsWith(this.sourceIndexFile)) {
-            return path.join(this.outputRelPath, sourceRelFilename.substring(from, to) + '.html');
+    getPageUrl(sourceFile) {
+        var from = sourceFile.indexOf(this.sourceRootPath) + this.sourceRootPath.length;
+        if (sourceFile.endsWith(this.sourceIndexFile)) {
+            var to = sourceFile.lastIndexOf(this.sourceIndexFile);
+            return path.join(this.urlsPrefix, sourceFile.substring(from, to));
         }
         else {
-            return path.join(this.outputRelPath, sourceRelFilename.substring(from, to), 'index.html');
+            var to = sourceFile.lastIndexOf('.');
+            return path.join(this.urlsPrefix, sourceFile.substring(from, to));
         }
     }
-    readFile(filename) {
-        return fs.readFileSync(filename).toString();
+    getOutputPath(sourcePath) {
+        var from = sourcePath.indexOf(this.sourceRootPath) + this.sourceRootPath.length;
+        return path.join(this.outputRootPath, sourcePath.substr(from));
     }
-    writeFile(filename, contents) {
-        console.log(`Writing: ${filename}`);
-        this.asyncWrites.add(filename);
-        fse.ensureDir(path.dirname(filename))
+    getOutputHtmlPageFilename(sourceFile) {
+        var from = sourceFile.indexOf(this.sourceRootPath) + this.sourceRootPath.length;
+        var to = sourceFile.lastIndexOf('.');
+        if (sourceFile.endsWith(this.sourceIndexFile)) {
+            return path.join(this.outputRootPath, sourceFile.substring(from, to) + '.html');
+        }
+        else {
+            return path.join(this.outputRootPath, sourceFile.substring(from, to), 'index.html');
+        }
+    }
+    readFile(file) {
+        return fs.readFileSync(file).toString();
+    }
+    writeFileAsync(file, contents) {
+        this.asyncWriteStarted(file);
+        fse.ensureDir(path.dirname(file))
             .then(() => {
-            fs.writeFile(filename, contents, (err) => {
+            fs.writeFile(file, contents, (err) => {
                 if (err) {
-                    console.error(`ERROR: can't write to ${filename}`);
+                    console.error(`ERROR: can't write to ${file}`);
                 }
-                this.asyncWrites.delete(filename);
-                if (this.asyncWrites.size == 0 && this.onAllAsyncWritesDone !== null) {
-                    this.onAllAsyncWritesDone();
-                }
+                this.asyncWriteDone(file);
             });
         })
             .catch((err) => {
             if (err) {
-                console.error(`ERROR: can't create folder ${path.dirname(filename)}`);
+                console.error(`ERROR: can't create folder ${path.dirname(file)}`);
                 return;
             }
+        });
+    }
+    copyAsync(src, dst) {
+        this.asyncWriteStarted(dst);
+        fse.copy(src, dst)
+            .then(() => {
+            this.asyncWriteDone(dst);
         });
     }
     /*
      * Explores recursively a directory and returns all the filepaths and folderpaths in the callback.
      */
-    getFilenames(relDirPath, extension, onDirFiles) {
-        var relFilenames = Array();
-        var relDirPaths = Array();
+    getFilenames(dir, extension, onDirFiles) {
+        var files = Array();
+        var dirs = Array();
         //console.info(`getFilenames for ${relDirPath}`)
-        var files = fs.readdirSync(relDirPath);
-        files.forEach((file) => {
-            var relFilename = path.join(relDirPath, file);
-            if (fs.statSync(relFilename).isDirectory() && !relFilename.endsWith(this.themeDir)) {
-                relDirPaths.push(relFilename);
+        var filenames = fs.readdirSync(dir);
+        filenames.forEach((filename) => {
+            var file = path.join(dir, filename);
+            if (fs.statSync(file).isDirectory() && !file.endsWith(this.themeDir)) {
+                dirs.push(file);
             }
-            else if (file.endsWith(extension)) {
-                relFilenames.push(relFilename);
+            else if (extension === null || filename.endsWith(extension)) {
+                files.push(file);
             }
         });
-        onDirFiles(relDirPath, relFilenames);
-        relDirPaths.forEach((dir) => {
+        onDirFiles(dir, files);
+        dirs.forEach((dir) => {
             this.getFilenames(dir, extension, onDirFiles);
         });
     }

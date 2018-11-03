@@ -19,7 +19,7 @@ class App {
         var serve = false;
         switch (args[argsOffset]) {
             case 'init':
-                var projName = "bakeit-proj";
+                var projName = '';
                 if (args.length > argsOffset + 1) {
                     projName = args[argsOffset + 1];
                 }
