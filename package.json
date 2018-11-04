@@ -1,6 +1,6 @@
 {
   "name": "bakeit",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "description": "Static site generator",
   "keywords": [
     "site generator",
@@ -9,7 +9,10 @@
     "markdown",
     "mustache",
     "handlebars",
-    "templates"
+    "templates",
+    "store locator",
+    "map locator",
+    "map"
   ],
   "main": "./dist/main.js",
   "scripts": {
