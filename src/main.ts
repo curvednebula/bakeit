@@ -61,12 +61,12 @@ class App {
       process.exit(1);
     }
 
-    if (this.config.sourceDir === undefined) {
-      this.config.sourceDir = 'src';
+    if (this.config.build.sourceDir === undefined) {
+      this.config.build.sourceDir = 'src';
     }
 
-    if (this.config.outputDir === undefined) {
-      this.config.outputDir = 'dist';
+    if (this.config.build.outputDir === undefined) {
+      this.config.build.outputDir = 'dist';
     }
 
     var gen = new StaticGen();
@@ -94,7 +94,7 @@ class App {
   private startFileChangeWatcher(gen: StaticGen) {
     // watch source dir ignoring .dotfiles and re-run generate
     chokidar
-      .watch([this.config.sourceDir, this.configFilename], { 
+      .watch([this.config.build.sourceDir, this.configFilename], { 
         //ignored: /(^|[\/\\])\../,
         ignoreInitial: true
       })
@@ -111,7 +111,7 @@ class App {
 
   private startHttpServer() {
 
-    var serveHandler = serveStatic(this.config.outputDir, {'index': ['index.html', 'index.htm']})
+    var serveHandler = serveStatic(this.config.build.outputDir, {'index': ['index.html', 'index.htm']})
 
     var server = http.createServer(function onRequest (req, res) {
       serveHandler(req, res, finalHandler(req, res));

@@ -6,9 +6,9 @@
       </button>
       <div div class="collapse navbar-collapse" id="collapsingNavbar">
         <div class="navbar-nav">
-          {{#config.menuItems}}
+          {{#each config.menuItems}}
           <a class="nav-item nav-link" href="{{url}}">{{name}}</a>
-          {{/config.menuItems}}
+          {{/each}}
         </div>
       </div>
   </nav>

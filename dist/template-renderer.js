@@ -2,11 +2,16 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require("fs");
 const path = require("path");
-const mustache = require("Mustache");
+const Mustache = require("mustache");
+const Handlebars = require("handlebars");
 class TemplateRenderer {
-    constructor(relThemePath) {
+    constructor(config, relThemePath) {
         this.templateExtension = '.html';
+        this.config = config;
         this.relThemePath = relThemePath;
+        if (config.build.templateFileExtension !== undefined) {
+            this.templateExtension = config.build.templateFileExtension;
+        }
     }
     renderTemplate(templateName, pageData) {
         var buf;
@@ -33,10 +38,18 @@ class TemplateRenderer {
         var script = this.getContentBetweenTags(buf, 'script');
         if (script != null) {
             // run script
-            var beforeRender = new Function('renderer', 'pageData', `${script};\n beforeRender(renderer, pageData);`);
+            var beforeRender = new Function('engine', 'pageData', `${script};\n beforeRender(engine, pageData);`);
             beforeRender(this, pageData);
         }
-        var html = mustache.render(template, pageData);
+        var templateLang = this.config.build.templateLanguage;
+        var html;
+        if (templateLang === undefined || templateLang === 'handlebars') {
+            var handlebarsTemplate = Handlebars.compile(template);
+            html = handlebarsTemplate(pageData);
+        }
+        else if (templateLang === 'mustache') {
+            html = Mustache.render(template, pageData);
+        }
         return html;
     }
     getContentBetweenTags(source, tag) {

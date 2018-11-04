@@ -1,17 +1,25 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as mustache from 'Mustache';
+import * as Mustache from 'mustache';
+import * as Handlebars from 'handlebars';
 
-import {PageData} from './page-data';
+import { PageData } from './page-data';
+import { Config } from './config';
 
 
 export class TemplateRenderer {
 
   private templateExtension = '.html';
+  private config: Config;
   private relThemePath: string;
 
-  constructor(relThemePath: string) {
+  constructor(config: Config, relThemePath: string) {
+    this.config = config;
     this.relThemePath = relThemePath;
+
+    if (config.build.templateFileExtension !== undefined) {
+      this.templateExtension = config.build.templateFileExtension;
+    }
   }
 
   public renderTemplate(templateName: string, pageData: PageData): string {
@@ -47,11 +55,20 @@ export class TemplateRenderer {
 
     if (script != null) {
       // run script
-      var beforeRender = new Function('renderer', 'pageData', `${script};\n beforeRender(renderer, pageData);`);
+      var beforeRender = new Function('engine', 'pageData', `${script};\n beforeRender(engine, pageData);`);
       beforeRender(this, pageData);
     }
 
-    var html: string = mustache.render(template, pageData);
+    var templateLang = this.config.build.templateLanguage;
+    var html: string;
+
+    if (templateLang === undefined || templateLang === 'handlebars') {
+      var handlebarsTemplate = Handlebars.compile(template);
+      html = handlebarsTemplate(pageData);
+    } 
+    else if (templateLang === 'mustache') {
+      html = Mustache.render(template, pageData);
+    }
     return html;
   }
 

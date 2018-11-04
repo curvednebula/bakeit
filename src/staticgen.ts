@@ -12,7 +12,7 @@ export class StaticGen {
 
   private sourceRootPath: string;
   private outputRootPath: string;
-  private defaultTemplate = 'default';
+  private defaultTemplate = 'main';
   private sourceIndexFile = 'index.md';
   private jsonIndexFile = 'index.json';
   private themeDir = '.theme';
@@ -38,12 +38,12 @@ export class StaticGen {
     this.executeWhenAllDone(() => {
 
       this.config = config;
-      this.sourceRootPath = config.sourceDir;
-      this.outputRootPath = config.outputDir;
+      this.sourceRootPath = config.build.sourceDir;
+      this.outputRootPath = config.build.outputDir;
 
       this.allPagesData = new Array<PageData>();
 
-      this.renderer = new TemplateRenderer(path.join(this.sourceRootPath, this.themeDir));
+      this.renderer = new TemplateRenderer(config, path.join(this.sourceRootPath, this.themeDir));
 
       fse.emptyDir(this.outputRootPath)
         .then(() => {
@@ -87,8 +87,8 @@ export class StaticGen {
 
     if (this.config.build.copy !== undefined) {
       this.config.build.copy.forEach(dupPage => {
-        var src = path.join(this.outputRootPath, dupPage.src);
-        var dst = path.join(this.outputRootPath, dupPage.dst);
+        var src = dupPage.src;
+        var dst = dupPage.dst;
 
         console.info(`Copying: ${src} -> ${dst}`);
         this.copyAsync(src, dst);

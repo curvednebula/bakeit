@@ -1,0 +1,93 @@
+<template>
+<html lang="{{config.htmlLang}}">
+<head>
+  <meta charset="utf-8">
+  <title>{{frontMatter.title}} | {{config.longTitle}}</title>
+  <base href="/">
+  <meta name="description" content="{{config.metaDescription}}">
+  <meta name="keywords" content="{{config.metaKeywords}}, {{frontMatter.tags}}">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" 
+    integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" 
+    crossorigin="anonymous">
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" 
+    integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" 
+    crossorigin=""/>
+
+  <style>
+    html, body {
+      min-height: 100% !important;
+      height:     100%;
+      padding-top: 28px;
+      padding-bottom: 0px;
+      padding-right: 0px;
+      padding-left: 0px;
+      margin:  0px 0px 0px 0px;
+    }
+    .content-window {
+      margin-top: 20px;
+      margin-bottom: 0px;
+      margin-left: 10px;
+      margin-right: 10px;
+    }
+    .mapstyle {
+      width: 100%; 
+      height: 100%; 
+    }
+  </style>
+
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" 
+    integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" 
+    crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" 
+    integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" 
+    crossorigin="anonymous"></script>
+
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" 
+    integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" 
+    crossorigin="anonymous"></script>
+
+  <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js" 
+    integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA==" 
+    crossorigin=""></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+</head>
+
+<body>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-17026194-3"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-17026194-3');
+    </script>
+
+    <a href="/sitemap.html"></a>
+
+    {{{navBar}}}
+    {{{pageContent}}}
+    
+</body>
+
+</html>
+</template>
+
+<script>
+function beforeRender(engine, pageData) {
+
+    pageData.navBar = engine.renderTemplate('navbar', pageData);
+
+    if (pageData.frontMatter.template === undefined) {
+        pageData.pageContent = engine.renderTemplate('content', pageData);
+    } else {
+        pageData.pageContent = engine.renderTemplate(pageData.frontMatter.template, pageData);
+    }
+}
+</script>

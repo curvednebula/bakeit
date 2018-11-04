@@ -1,0 +1,28 @@
+<template>
+    <div class="content-window">
+      <div class="container-fluid">
+      {{#if frontMatter.youtube}}
+      <div class="row">
+          <div class="col-md-8">            
+              <div class="video embed-responsive embed-responsive-16by9">
+                  <iframe width=960 height=540 src="https://www.youtube.com/embed/{{frontMatter.youtube}}"
+                      frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+              </div>
+              <br>
+              <h4>{{frontMatter.title}}</h4>
+              <div class="small">Tags: <i>{{frontMatter.tags}}</i></div>
+              <br>
+          </div>
+          <div class="col-md-4">
+              <div>{{{content}}}</div>
+          </div>
+      </div>
+      {{else}}
+      <div class="col-md-12">
+          <h4>{{frontMatter.title}}</h4>
+          <p>{{{content}}}</p>
+      </div>
+      {{/if}}
+      </div>
+    </div>
+</template>

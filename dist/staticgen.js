@@ -9,7 +9,7 @@ const template_renderer_1 = require("./template-renderer");
 const page_data_1 = require("./page-data");
 class StaticGen {
     constructor() {
-        this.defaultTemplate = 'default';
+        this.defaultTemplate = 'main';
         this.sourceIndexFile = 'index.md';
         this.jsonIndexFile = 'index.json';
         this.themeDir = '.theme';
@@ -21,10 +21,10 @@ class StaticGen {
         // if previous run isn't finished yet - wait
         this.executeWhenAllDone(() => {
             this.config = config;
-            this.sourceRootPath = config.sourceDir;
-            this.outputRootPath = config.outputDir;
+            this.sourceRootPath = config.build.sourceDir;
+            this.outputRootPath = config.build.outputDir;
             this.allPagesData = new Array();
-            this.renderer = new template_renderer_1.TemplateRenderer(path.join(this.sourceRootPath, this.themeDir));
+            this.renderer = new template_renderer_1.TemplateRenderer(config, path.join(this.sourceRootPath, this.themeDir));
             fse.emptyDir(this.outputRootPath)
                 .then(() => {
                 this.generateOutput();
@@ -57,8 +57,8 @@ class StaticGen {
         // copy files
         if (this.config.build.copy !== undefined) {
             this.config.build.copy.forEach(dupPage => {
-                var src = path.join(this.outputRootPath, dupPage.src);
-                var dst = path.join(this.outputRootPath, dupPage.dst);
+                var src = dupPage.src;
+                var dst = dupPage.dst;
                 console.info(`Copying: ${src} -> ${dst}`);
                 this.copyAsync(src, dst);
             });

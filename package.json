@@ -1,13 +1,15 @@
 {
   "name": "bakeit",
-  "version": "0.1.15",
+  "version": "0.2.1",
   "description": "Static site generator",
   "keywords": [
     "site generator",
     "generator",
     "static site",
     "markdown",
-    "mustache"
+    "mustache",
+    "handlebars",
+    "templates"
   ],
   "main": "./dist/main.js",
   "scripts": {
@@ -28,6 +30,7 @@
     "chokidar": "^2.0.4",
     "finalhandler": "^1.1.1",
     "fs-extra": "^7.0.0",
+    "handlebars": "^4.0.12",
     "marked": "^0.5.1",
     "mustache": "^3.0.0",
     "serve-static": "^1.13.2",

@@ -1,0 +1,29 @@
+<template>
+  <div id="map" class="mapstyle"></div>
+
+  <script>
+  var app = new Vue({
+    el: '#map',
+    
+    data: {
+    },
+
+    mounted: function () {
+      var map = L.map('map').setView([{{frontMatter.latlng}}], {{frontMatter.mapzoom}});
+      //L.Icon.Default.imagePath = 'assets/images';
+
+      // it is required to show attribution to see the map
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map);
+
+      var marker;
+
+      {{#each pages}}
+        marker = L.marker([{{frontMatter.latlng}}]);
+        marker.addTo(map).bindPopup('<h6><a href="{{url}}">{{frontMatter.hint}}</a></h6>');
+      {{/each}}
+    }
+  });
+  </script>
+</template>

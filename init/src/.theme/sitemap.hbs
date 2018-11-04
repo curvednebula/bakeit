@@ -1,0 +1,12 @@
+<template>
+  <div class="content-window">
+    <div class="container-fluid">
+      <div class="col-md-12">
+        <h4>Site Map</h4>
+        {{#each pages}}
+        <p><a href="{{{url}}}">{{frontMatter.title}}</a></p>
+        {{/each}}
+      </div>
+    </div>
+  </div>
+</template>

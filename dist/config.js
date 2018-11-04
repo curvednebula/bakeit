@@ -1,9 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-class MenuItem {
-}
-exports.MenuItem = MenuItem;
-;
 class BuildOptions {
 }
 exports.BuildOptions = BuildOptions;
