@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as yaml from 'yamljs';
 
 import { Config } from './config';
-import { TemplateRenderer } from './template-renderer';
+import { TemplateEngine } from './template-engine';
 import { PageData } from './page-data';
 
 export class StaticGen {
@@ -16,11 +16,12 @@ export class StaticGen {
   private sourceIndexFile = 'index.md';
   private jsonIndexFile = 'index.json';
   private themeDir = '.theme';
+  private themeRootPath;
   private urlsPrefix = '/';
   private sourceExtension = '.md';
   private config: Config;
   
-  private renderer: TemplateRenderer;
+  private templateEngine: TemplateEngine;
 
   private allPagesData: PageData[];
 
@@ -40,10 +41,11 @@ export class StaticGen {
       this.config = config;
       this.sourceRootPath = config.build.sourceDir;
       this.outputRootPath = config.build.outputDir;
+      this.themeRootPath = path.join(this.sourceRootPath, this.themeDir);
 
       this.allPagesData = new Array<PageData>();
 
-      this.renderer = new TemplateRenderer(config, path.join(this.sourceRootPath, this.themeDir));
+      this.templateEngine = new TemplateEngine(config, this.themeRootPath);
 
       fse.emptyDir(this.outputRootPath)
         .then(() => {
@@ -251,7 +253,7 @@ export class StaticGen {
 
   private generatePage(outputFile: string, templateName: string, pageData: PageData): void {
     try {
-      var html = this.renderer.renderTemplate(templateName, pageData);
+      var html = this.templateEngine.renderTemplate(templateName, pageData);
       this.writeFileAsync(outputFile, html);
     } 
     catch (err) {
@@ -260,34 +262,43 @@ export class StaticGen {
     }
   }
 
-  private getPageUrl(sourceFile: string): string {
-    var from = sourceFile.indexOf(this.sourceRootPath) + this.sourceRootPath.length;
-    
-    if (sourceFile.endsWith(this.sourceIndexFile)) {
-      var to = sourceFile.lastIndexOf(this.sourceIndexFile);
-      return path.join(this.urlsPrefix, sourceFile.substring(from, to));
+  private getOutputPath(sourcePath: string): string {
+
+    var relativePath = path.relative(this.themeRootPath, sourcePath);
+
+    // console.log(relativePath);
+
+    if (relativePath.startsWith('..')) {
+      relativePath = path.relative(this.sourceRootPath, sourcePath);
+      if (relativePath.startsWith('..')) {
+        throw new Error(`Unexpected source file location: ${sourcePath}`);
+      }
     }
-    else {
-      var to = sourceFile.lastIndexOf('.');
-      return path.join(this.urlsPrefix, sourceFile.substring(from, to));
+
+    return path.join(this.outputRootPath, relativePath);
+  }
+
+  /**
+   * Raw page URL is URL without urlPrefix
+   */
+  private getPageRawUrl(sourceFile: string): string {
+    var relativePath = path.relative(this.sourceRootPath, sourceFile);
+    
+    if (relativePath.endsWith(this.sourceIndexFile)) {
+      var to = relativePath.lastIndexOf(this.sourceIndexFile);
+      return relativePath.substring(0, to);
+    } else {
+      var to = relativePath.lastIndexOf('.');
+      return relativePath.substring(0, to);
     }
   }
 
-  private getOutputPath(sourcePath: string): string {
-    var from = sourcePath.indexOf(this.sourceRootPath) + this.sourceRootPath.length;
-    return path.join(this.outputRootPath, sourcePath.substr(from));
+  private getPageUrl(sourceFile: string): string {
+    return path.join(this.urlsPrefix, this.getPageRawUrl(sourceFile));
   }
 
   private getOutputHtmlPageFilename(sourceFile: string): string {
-    var from = sourceFile.indexOf(this.sourceRootPath) + this.sourceRootPath.length;
-    var to = sourceFile.lastIndexOf('.');
-
-    if (sourceFile.endsWith(this.sourceIndexFile)) {
-      return path.join(this.outputRootPath, sourceFile.substring(from, to) + '.html');
-    }
-    else {
-      return path.join(this.outputRootPath, sourceFile.substring(from, to), 'index.html');
-    }
+    return path.join(this.outputRootPath, this.getPageRawUrl(sourceFile), 'index.html');
   }
 
   private readFile(file: string): string {
@@ -336,14 +347,15 @@ export class StaticGen {
     //console.info(`getFilenames for ${relDirPath}`)
 
     var filenames = fs.readdirSync(dir);
+    var templateExt = this.templateEngine.getTemplateExtension();
 
     filenames.forEach((filename) => {
         var file: string = path.join(dir, filename);
 
-        if (fs.statSync(file).isDirectory() && !file.endsWith(this.themeDir)) {
+        if (fs.statSync(file).isDirectory()) {
           dirs.push(file);
         }
-        else if (extension === null || filename.endsWith(extension)) {
+        else if ((extension === null || filename.endsWith(extension)) && !filename.endsWith(templateExt)) {
           files.push(file);
         }
     });

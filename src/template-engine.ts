@@ -7,7 +7,7 @@ import { PageData } from './page-data';
 import { Config } from './config';
 
 
-export class TemplateRenderer {
+export class TemplateEngine {
 
   private templateExtension = '.html';
   private config: Config;
@@ -20,6 +20,10 @@ export class TemplateRenderer {
     if (config.build.templateFileExtension !== undefined) {
       this.templateExtension = config.build.templateFileExtension;
     }
+  }
+
+  public getTemplateExtension(): string {
+    return this.templateExtension;
   }
 
   public renderTemplate(templateName: string, pageData: PageData): string {

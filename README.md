@@ -1,7 +1,7 @@
-# BakeIt - Static Site Generator (with store locator map)
+# BakeIt - Static Site Generator (with store locator map template)
 
 BakeIt allows you to generate website from Markdown (.md) source files. It uses {{ handlebars }} or {{ mustache }} as templating language.
-Comes with template that allows to build sites with store/business locator map.
+It comes with template to build sites with store/business locator map.
 
 ## Quick start
 
