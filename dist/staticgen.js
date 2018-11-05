@@ -209,24 +209,27 @@ class StaticGen {
         return path.join(this.outputRootPath, relativePath);
     }
     /**
-     * Raw page URL is URL without urlPrefix
+     * Raw page URL is URL without urlPrefix and with OS specific dir separator.
+     * You can't use them for URLs directly!
      */
     getPageRawUrl(sourceFile) {
         var relativePath = path.relative(this.sourceRootPath, sourceFile);
+        var rawUrl;
         if (relativePath.endsWith(this.sourceIndexFile)) {
             var to = relativePath.lastIndexOf(this.sourceIndexFile);
-            return relativePath.substring(0, to);
+            rawUrl = relativePath.substring(0, to);
         }
         else {
             var to = relativePath.lastIndexOf('.');
-            return relativePath.substring(0, to);
+            rawUrl = relativePath.substring(0, to);
         }
+        return rawUrl;
     }
     getPageUrl(sourceFile) {
-        return path.join(this.urlsPrefix, this.getPageRawUrl(sourceFile));
+        return path.join(this.urlsPrefix, this.getPageRawUrl(sourceFile)).replace(/\\/g, '/');
     }
     getOutputHtmlPageFilename(sourceFile) {
-        return path.join(this.outputRootPath, this.getPageRawUrl(sourceFile), 'index.html');
+        return path.join(this.outputRootPath, this.getPageRawUrl(sourceFile), 'index.html').replace(/\\/g, '/');
     }
     readFile(file) {
         return fs.readFileSync(file).toString();

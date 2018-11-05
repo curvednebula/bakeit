@@ -279,26 +279,30 @@ export class StaticGen {
   }
 
   /**
-   * Raw page URL is URL without urlPrefix
+   * Raw page URL is URL without urlPrefix and with OS specific dir separator.
+   * You can't use them for URLs directly!
    */
   private getPageRawUrl(sourceFile: string): string {
     var relativePath = path.relative(this.sourceRootPath, sourceFile);
+
+    var rawUrl: string;
     
     if (relativePath.endsWith(this.sourceIndexFile)) {
       var to = relativePath.lastIndexOf(this.sourceIndexFile);
-      return relativePath.substring(0, to);
+      rawUrl = relativePath.substring(0, to);
     } else {
       var to = relativePath.lastIndexOf('.');
-      return relativePath.substring(0, to);
+      rawUrl = relativePath.substring(0, to);
     }
+    return rawUrl;
   }
 
   private getPageUrl(sourceFile: string): string {
-    return path.join(this.urlsPrefix, this.getPageRawUrl(sourceFile));
+    return path.join(this.urlsPrefix, this.getPageRawUrl(sourceFile)).replace(/\\/g, '/');
   }
 
   private getOutputHtmlPageFilename(sourceFile: string): string {
-    return path.join(this.outputRootPath, this.getPageRawUrl(sourceFile), 'index.html');
+    return path.join(this.outputRootPath, this.getPageRawUrl(sourceFile), 'index.html').replace(/\\/g, '/');
   }
 
   private readFile(file: string): string {
