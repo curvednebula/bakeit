@@ -4,8 +4,6 @@
 /init/dist
 /tmp
 /.out-tsc
-/bakeit-proj
-/.skylinewalker
 
 # dependencies
 /node_modules
