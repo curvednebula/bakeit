@@ -85,7 +85,7 @@ class App {
   private printHelp() {
     console.log('Usage: bakeit [<cmd>]\n\n' +
       'Where <cmd>:\n' +
-      '  init [<folder-name>] - init new bakeit project folder\n' +
+      '  init [<folder-name>] - init new bakeit project in current or in specified folder\n' +
       '  serve - runs HTTP server and re-generates site automatically on source files change\n' +
       '  help - this help info\n'
     );
