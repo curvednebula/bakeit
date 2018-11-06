@@ -45,7 +45,6 @@ To run development HTTP server:
     [Read more on Wikipedia](https://en.wikipedia.org/wiki/Empire_State_Building)
 
 The upper part of each .md file is called front matter. You can access all variables defined in the front matter in templates.
-All front matter variables are optional.
 
 ## Templates format
 
