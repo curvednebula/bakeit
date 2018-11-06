@@ -20,10 +20,17 @@
       var marker;
 
       {{#each pages}}
-        marker = L.marker([{{frontMatter.latlng}}]);
-        marker.addTo(map).bindPopup('<h6><a href="{{url}}">{{frontMatter.hint}}</a></h6>');
+        {{#if frontMatter.latlng}}
+        {{#if frontMatter.hint}}
+        {{#if url}}
+          marker = L.marker([{{frontMatter.latlng}}]);
+          marker.addTo(map).bindPopup('<h6><a href="{{url}}">{{frontMatter.hint}}</a></h6>');
+        {{/if}}  
+        {{/if}}
+        {{/if}}
       {{/each}}
     }
   });
   </script>
 </template>
+

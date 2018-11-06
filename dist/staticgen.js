@@ -100,6 +100,15 @@ class StaticGen {
         console.info(`Processing folder: ${dir}`);
         var dirPagesData = new Array();
         var indexFile = null;
+        // collect list of pages
+        for (var i = 0; i < files.length; i++) {
+            var file = files[i];
+            if (file.endsWith(this.sourceExtension)) {
+                var pageData = this.getPageData(file, false);
+                dirPagesData.push(pageData);
+            }
+        }
+        // generate html from md files
         for (var i = 0; i < files.length; i++) {
             var file = files[i];
             if (file.endsWith(this.sourceIndexFile)) {
@@ -107,10 +116,8 @@ class StaticGen {
             }
             else if (file.endsWith(this.sourceExtension)) {
                 // markdown (.md) source file
-                var buf = this.readFile(file);
-                var pageData = this.getPageData(buf);
-                pageData.url = this.getPageUrl(file);
-                dirPagesData.push(pageData);
+                var pageData = this.getPageData(file);
+                pageData.pages = dirPagesData;
                 var outputFile = this.getOutputHtmlPageFilename(file);
                 console.info(`Generating: ${file} -> ${outputFile}`);
                 this.generatePage(outputFile, this.defaultTemplate, pageData);
@@ -122,21 +129,17 @@ class StaticGen {
                 this.copyAsync(file, outputFile);
             }
         }
-        var dirPagesDataIncludingIndex = dirPagesData.slice();
         if (indexFile != null) {
             // folder index
-            var buf = this.readFile(indexFile);
-            var pageData = this.getPageData(buf);
-            pageData.url = this.getPageUrl(indexFile);
+            var pageData = this.getPageData(indexFile);
             pageData.pages = dirPagesData;
-            dirPagesDataIncludingIndex.push(pageData);
             var outputFile = this.getOutputHtmlPageFilename(indexFile);
             console.info(`Generating: ${indexFile} -> ${outputFile}`);
             this.generatePage(outputFile, this.defaultTemplate, pageData);
             //var jsonIndexFilename = this.getOutputPath(path.join(dir, this.jsonIndexFile));
             //this.generateIndexJson(jsonIndexFilename, pageData);
         }
-        return dirPagesDataIncludingIndex;
+        return dirPagesData;
     }
     /*
     private generateIndexJson(filename: string, pageData: any): void {
@@ -175,16 +178,20 @@ class StaticGen {
       this.writeFile(filename, JSON.stringify(contents));
     }
     */
-    getPageData(pageText) {
+    getPageData(sourceFile, includeContent = true) {
         const fmSeparator = '---';
         const fmLength = fmSeparator.length;
+        var pageText = this.readFile(sourceFile);
         var fmBegin = pageText.indexOf(fmSeparator);
         var fmEnd = pageText.indexOf(fmSeparator, fmBegin + fmLength);
         var frontMatterStr = pageText.substring(fmBegin + fmLength, fmEnd);
         var pageData = new page_data_1.PageData();
         pageData.frontMatter = yaml.parse(frontMatterStr);
-        pageData.content = marked(pageText.substr(fmEnd + fmLength));
         pageData.config = this.config;
+        pageData.url = this.getPageUrl(sourceFile);
+        if (includeContent) {
+            pageData.content = marked(pageText.substr(fmEnd + fmLength));
+        }
         return pageData;
     }
     generatePage(outputFile, templateName, pageData) {

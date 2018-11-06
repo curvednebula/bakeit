@@ -144,6 +144,19 @@ export class StaticGen {
 
     var dirPagesData = new Array<PageData>();
     var indexFile: string = null;
+
+    // collect list of pages
+
+    for (var i=0; i<files.length; i++) {
+      var file = files[i];
+
+      if (file.endsWith(this.sourceExtension)) {
+        var pageData = this.getPageData(file, false);
+        dirPagesData.push(pageData);
+      }
+    }
+
+    // generate html from md files
      
     for (var i=0; i<files.length; i++) {
 
@@ -154,11 +167,8 @@ export class StaticGen {
       }
       else if (file.endsWith(this.sourceExtension)) {
         // markdown (.md) source file
-        var buf = this.readFile(file);
-        var pageData = this.getPageData(buf);
-        pageData.url = this.getPageUrl(file);
-
-        dirPagesData.push(pageData);
+        var pageData = this.getPageData(file);
+        pageData.pages = dirPagesData;
 
         var outputFile = this.getOutputHtmlPageFilename(file);
         console.info(`Generating: ${file} -> ${outputFile}`);
@@ -172,16 +182,10 @@ export class StaticGen {
       }
     }
 
-    var dirPagesDataIncludingIndex = dirPagesData.slice();
-
     if (indexFile != null) {
       // folder index
-      var buf = this.readFile(indexFile);
-      var pageData = this.getPageData(buf);
-      pageData.url = this.getPageUrl(indexFile);
+      var pageData = this.getPageData(indexFile);
       pageData.pages = dirPagesData;
-
-      dirPagesDataIncludingIndex.push(pageData);
 
       var outputFile = this.getOutputHtmlPageFilename(indexFile)
       console.info(`Generating: ${indexFile} -> ${outputFile}`);
@@ -191,7 +195,7 @@ export class StaticGen {
       //this.generateIndexJson(jsonIndexFilename, pageData);
     }
 
-    return dirPagesDataIncludingIndex;
+    return dirPagesData;
   }
 
 
@@ -234,10 +238,13 @@ export class StaticGen {
   }
   */
 
-  private getPageData(pageText: string): PageData {
 
+  private getPageData(sourceFile: string, includeContent: boolean = true): PageData {
+    
     const fmSeparator = '---';
     const fmLength = fmSeparator.length;
+
+    var pageText = this.readFile(sourceFile);
 
     var fmBegin = pageText.indexOf(fmSeparator);
     var fmEnd = pageText.indexOf(fmSeparator, fmBegin + fmLength);
@@ -245,9 +252,13 @@ export class StaticGen {
 
     var pageData = new PageData();
     pageData.frontMatter = yaml.parse(frontMatterStr);
-    pageData.content = marked(pageText.substr(fmEnd + fmLength));
-    pageData.config = this.config;
 
+    pageData.config = this.config;
+    pageData.url = this.getPageUrl(sourceFile);
+
+    if (includeContent) {
+      pageData.content = marked(pageText.substr(fmEnd + fmLength));
+    }
     return pageData;
   }
 
