@@ -18,7 +18,7 @@ Put your source .md files to:
 
     src/
 
-Your website URLs structure will mirror folders structure of the source files. I.e.:
+Your website's URL structure will mirror the folder structure of the source files. I.e.:
 
     /src/newyork/index.md                 -> http://<your-website>/newyork
     /src/newyork/empire-state-building.md -> http://<your-website>/newyork/empire-state-building
@@ -44,7 +44,7 @@ To run development HTTP server:
 
     [Read more on Wikipedia](https://en.wikipedia.org/wiki/Empire_State_Building)
 
-The upper part of each .md file is called front matter. You can access all variables defined in the front matter in templates.
+The upper part of each .md file is called front matter. You can access all variables defined in the front matter from within templates.
 
 ## Templates format
 
@@ -71,6 +71,6 @@ There must be at least one default template (src/.theme/default.html):
     }
     </script>
 
-You can use JavaScript to pre-process each template rendering. I.e. in the example above {{{navBar}}} is populated using another template (src/.theme/navbar.html). This allows to nest one template into another.
+You can use JavaScript to pre-process each template rendering. E.g. in the example above {{{navBar}}} is populated using another template (src/.theme/navbar.html). This enables nesting one template into another.
 
-Script section is optional.
+The Script section is optional.
